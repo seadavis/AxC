@@ -22,12 +22,15 @@ build_project() {
 # Parse arguments
 RUN_ONLY=false
 CLEAN=false
+POSITIONAL_ARGS=()
 
-while getopts ":rc" opt; do
-    case ${opt} in
-        r ) RUN_ONLY=true ;;
-        c ) CLEAN=true ;;
-        * ) echo "Usage: $0 [-r] (run only) [-c] (clean build directory)"; exit 1 ;;
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -r ) RUN_ONLY=true; shift ;;   # Skip CMake build step
+        -c ) CLEAN=true; shift ;;      # Clean build directory
+        -- ) shift; break ;;           # Stop argument parsing
+        -* ) echo "Usage: $0 [-r] (run only) [-c] (clean) [-- <args to executable>]"; exit 1 ;;
+        * ) POSITIONAL_ARGS+=("$1"); shift ;;  # Store extra arguments
     esac
 done
 
@@ -47,6 +50,6 @@ if [[ ! -f "$EXECUTABLE" ]]; then
     exit 1
 fi
 
-# Run the executable
-echo "Running $EXECUTABLE..."
-"$EXECUTABLE"
+# Run the executable with passed arguments
+echo "Running $EXECUTABLE ${POSITIONAL_ARGS[*]}..."
+"$EXECUTABLE" "${POSITIONAL_ARGS[@]}"

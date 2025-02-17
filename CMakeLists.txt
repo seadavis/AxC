@@ -2,11 +2,11 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.8)
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 
 project ("AxC")
-
 find_package(LLVM REQUIRED CONFIG)
-
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -22,6 +22,3 @@ add_executable (AxC "./src/AxC.cpp" "./src/AxC.h")
 target_link_libraries(AxC ${LLVM_LIBS})
 
 set_property(TARGET AxC PROPERTY CXX_STANDARD 20)
-
-
-# TODO: Add tests and install targets if needed.
