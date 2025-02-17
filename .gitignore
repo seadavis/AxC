@@ -1,6 +1,6 @@
 CMakeCache.txt
 CMakeFiles/** 
 Makefile
-output/**
+build/** 
 cmake_install.cmake
 AxC
