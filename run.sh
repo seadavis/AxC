@@ -34,7 +34,6 @@ done
 # Clean build files if requested
 if $CLEAN; then
     clean_build
-    exit 0
 fi
 
 # Build the project unless -r is specified
