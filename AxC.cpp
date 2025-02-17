@@ -94,6 +94,6 @@ int main(int argc, char** argv) {
     llvm::outs() << "Object file written to " << argv[2] << "\n";
     string command = "clang " + string(argv[2]) + " -o example";
     system(command.c_str());
-    llvm::outs() << "Generated executable"
+    llvm::outs() << "Generated executable";
     return 0;
 }
