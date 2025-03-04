@@ -18,7 +18,7 @@ add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(LLVM_LIBS core native target targetparser support irreader bitreader)
 
 # Add source to this project's executable.
-add_executable (AxC "./src/AxC.cpp" "./src/AxC.h")
+add_executable (AxC "./src/AxC.cpp" "./src/AxC.h" "./src/AST.h" "./src/AST.cpp" "./src/Lexer.cpp" "./src/Lexer.h" "./src/Parser.h" "./src/Parser.cpp" "./src/TreeWalker.h" "./src/TreeWalker.cpp")
 target_link_libraries(AxC ${LLVM_LIBS})
 
 set_property(TARGET AxC PROPERTY CXX_STANDARD 20)

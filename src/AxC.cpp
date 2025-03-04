@@ -16,27 +16,42 @@
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/TargetParser/Host.h>
 #include <llvm/IR/LegacyPassManager.h>
-#include <algorithm>
-#include <cassert>
-#include <cctype>
-#include <cstdio>
-#include <cstdlib>
-#include <map>
-#include <memory>
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include <string>
-#include <system_error>
-#include <utility>
-#include <vector>
+
+#include "AST.h"
+#include "Lexer.h"
+#include "Parser.h"
+#include "TreeWalker.h"
 
 using namespace llvm;
 using namespace std;
 using namespace llvm::sys;
 
+string readFileContents(const std::string& filePath) {
+    std::ifstream file(filePath);
+    
+    if (!file) {
+        throw std::runtime_error("Could not open file: " + filePath);
+    }
+
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
+}
+
 int main(int argc, char** argv) {
+
+
     if (argc < 3) {
-        errs() << "Usage: " << argv[0] << " <input.ll> <output.o>\n";
+        errs() << "Usage: " << argv[0] << " <program.ax> <exename>\n";
         return 1;
     }
+
+    Parser p(readFileContents(argv[1]));
+    TreeWalker treeWalker(p.parseProgram());
 
     // Initialize LLVM Targets
     InitializeNativeTarget();
@@ -46,28 +61,37 @@ int main(int argc, char** argv) {
     SMDiagnostic Err;
 
     // Parse the LLVM IR file
-    std::unique_ptr<Module> Mod = parseIRFile(argv[1], Err, Context);
-    if (!Mod) {
-        cout << "Error: Failed to parse IR file.\n";
+    auto mod = treeWalker.generateIR();
+    if (!mod) {
+        cout << "Error: Failed to compile program.\n";
         Err.print(argv[0], errs());
         return 1;
     }
 
+    // File path to save IR
+    std::string filename = "output.ll";
+    std::error_code eC;
+
+    // Create a file output stream
+    llvm::raw_fd_ostream file(filename, eC, llvm::sys::fs::OF_Text);
+
     // Get target triple for the host system
-    auto TargetTriple = sys::getDefaultTargetTriple();
-    Mod->setTargetTriple(TargetTriple);
+    auto targetTriple = sys::getDefaultTargetTriple();
+    mod->setTargetTriple(targetTriple);
+    mod->print(file, nullptr);
 
     // Look up the target
-    std::string Error;
-    const Target* Target = TargetRegistry::lookupTarget(TargetTriple, Error);
-    if (!Target) {
-        errs() << Error;
+    std::string early_inc_iterator_impl;
+    string error;
+    const Target* target = TargetRegistry::lookupTarget(targetTriple, error);
+    if (!target) {
+        errs() << error;
         return 1;
     }
 
     // Create target machine
     TargetOptions opt;
-    auto TargetMachine = Target->createTargetMachine(TargetTriple, "generic", "", opt, std::nullopt);
+    auto TargetMachine = target->createTargetMachine(targetTriple, "generic", "", opt, std::nullopt);
     if (!TargetMachine) {
         cout << "Error: Unable to create target machine.\n";
         return 1;
@@ -75,7 +99,7 @@ int main(int argc, char** argv) {
 
     // Generate object file
     std::error_code EC;
-    raw_fd_ostream Dest(argv[2], EC, sys::fs::OF_None);
+    raw_fd_ostream Dest(string(argv[2]) +".o", EC, sys::fs::OF_None);
     if (EC) {
         llvm::errs() << "Error opening file: " << EC.message() << "\n";
         return 1;
@@ -88,11 +112,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    PM.run(*Mod);
+    if (llvm::verifyModule(*mod, &llvm::errs())) {
+        std::cerr << "Module verification failed!\n";
+        return -1;
+    }
+
+    PM.run(*mod);
     Dest.flush();
 
-    llvm::outs() << "Object file written to " << argv[2] << "\n";
-    string command = "clang " + string(argv[2]) + " -o example";
+    llvm::outs() << "Object file written to " << argv[2] << ".o \n";
+    string command = "clang -no-pie " + string(argv[2]) + ".o -o example";
     system(command.c_str());
     llvm::outs() << "Generated executable";
     return 0;
