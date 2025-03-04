@@ -16,18 +16,20 @@ clean_build() {
 # Function to configure and build the project
 build_project() {
     echo "Configuring and building the project..."
-    cmake -S . -B "$BUILD_DIR" && cmake --build "$BUILD_DIR"
+    cmake -DCMAKE_BUILD_TYPE=Debug -S . -B "$BUILD_DIR" && cmake --build "$BUILD_DIR"
 }
 
 # Parse arguments
 RUN_ONLY=false
 CLEAN=false
+BUILD_ONLY=false
 POSITIONAL_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -r ) RUN_ONLY=true; shift ;;   # Skip CMake build step
         -c ) CLEAN=true; shift ;;      # Clean build directory
+        -b ) BUILD_ONLY=true; shift ;;      # Clean build directory
         -- ) shift; break ;;           # Stop argument parsing
         -* ) echo "Usage: $0 [-r] (run only) [-c] (clean) [-- <args to executable>]"; exit 1 ;;
         * ) POSITIONAL_ARGS+=("$1"); shift ;;  # Store extra arguments
@@ -50,6 +52,8 @@ if [[ ! -f "$EXECUTABLE" ]]; then
     exit 1
 fi
 
-# Run the executable with passed arguments
-echo "Running $EXECUTABLE ${POSITIONAL_ARGS[*]}..."
-"$EXECUTABLE" "${POSITIONAL_ARGS[@]}"
+if ! $BUILD_ONLY; then
+    # Run the executable with passed arguments
+    echo "Running $EXECUTABLE ${POSITIONAL_ARGS[*]}..."
+    "$EXECUTABLE" "${POSITIONAL_ARGS[@]}"
+fi
