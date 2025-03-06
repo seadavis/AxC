@@ -39,45 +39,18 @@ llvm::Value* TreeWalker::visit(ExprStatementNode* statementNode)
 
 llvm::Value*  TreeWalker::visit(LiteralExprNode* exprNode)
 {
-    std::string str = exprNode->data;  // Ensure null termination
-
-    ArrayType *ArrayTy = ArrayType::get(Type::getInt8Ty(*context), str.size());
-
-    auto constant = builder->CreateGlobalStringPtr(str);
-
-    // Define the global variable @.str
-
-    Value *Idx0 = ConstantInt::get(Type::getInt64Ty(*context), 0);
-    Value *Idx1 = ConstantInt::get(Type::getInt64Ty(*context), 0);
-
-    // Generate the GetElementPtr instruction
-    Value *GEP = builder->CreateGEP(ArrayTy, constant, {Idx0, Idx1}, "cast210");
-
-    return GEP;
+    return builder->CreateGlobalStringPtr(exprNode->data);
 }
 
 Value*  TreeWalker::visit(CallExprNode* exprNode)
 {
     //this is where we get the puts type to a global string ptr
     Function* calleeF = module->getFunction(exprNode->FunctionName);
-   /*std::vector<Value *> argsV;
-    for (unsigned i = 0, e = exprNode->Arguments.size(); i != e; ++i) {
+    std::vector<Value *> argsV;
+    for (size_t i = 0; i < exprNode->Arguments.size(); i++) {
         argsV.push_back(visit(exprNode->Arguments[i]));
-    }*/ 
-
-    std::string helloWorld = "helloWorld";
-    ArrayType *ArrayTy = ArrayType::get(Type::getInt8Ty(*context), helloWorld.size());
-
-    auto constant = builder->CreateGlobalStringPtr(helloWorld);
-
-    // Define the global variable @.str
-
-    Value *Idx0 = ConstantInt::get(Type::getInt64Ty(*context), 0);
-    Value *Idx1 = ConstantInt::get(Type::getInt64Ty(*context), 0);
-
-    // Generate the GetElementPtr instruction
-    Value *GEP = builder->CreateGEP(ArrayTy, constant, {Idx0, Idx1}, "cast210");
-    return builder->CreateCall(calleeF, GEP);
+    }
+    return builder->CreateCall(calleeF, argsV);
 }
 
 Value* TreeWalker::visit(FunctionNode* functionNode)

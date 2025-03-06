@@ -98,7 +98,7 @@ std::string Lexer::readStringLiteral()
         readChar();
     }
     readChar();
-    return input.substr(startPosition + 1, (this->position - 1) - startPosition);
+    return input.substr(startPosition + 1, (this->position - 1) - startPosition - 1);
 }
 
 bool Lexer::isWhiteSpace()

@@ -19,9 +19,19 @@ build_project() {
     cmake -DCMAKE_BUILD_TYPE=Debug -S . -B "$BUILD_DIR" && cmake --build "$BUILD_DIR"
 }
 
+run_valgrind(){
+    valgrind --leak-check=full \
+         --show-leak-kinds=all \
+         --track-origins=yes \
+         --verbose \
+         --log-file=valgrind-out.txt \
+        $EXECUTABLE "${POSITIONAL_ARGS[@]}"
+}
+
 # Parse arguments
 RUN_ONLY=false
 CLEAN=false
+RUN_VALGRIND=false
 BUILD_ONLY=false
 POSITIONAL_ARGS=()
 
@@ -29,6 +39,7 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         -r ) RUN_ONLY=true; shift ;;   # Skip CMake build step
         -c ) CLEAN=true; shift ;;      # Clean build directory
+        -v ) RUN_VALGRIND=true; shift ;;      # Clean build directory
         -b ) BUILD_ONLY=true; shift ;;      # Clean build directory
         -- ) shift; break ;;           # Stop argument parsing
         -* ) echo "Usage: $0 [-r] (run only) [-c] (clean) [-- <args to executable>]"; exit 1 ;;
@@ -44,6 +55,12 @@ fi
 # Build the project unless -r is specified
 if ! $RUN_ONLY; then
     build_project
+fi
+
+if $RUN_VALGRIND; then
+    echo "running under valgrind"
+    run_valgrind
+    exit 1
 fi
 
 # Ensure the executable exists before running
