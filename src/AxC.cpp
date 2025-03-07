@@ -24,7 +24,6 @@
 #include "AST.h"
 #include "Lexer.h"
 #include "Parser.h"
-#include "TreeWalker.h"
 
 using namespace llvm;
 using namespace std;
@@ -51,7 +50,8 @@ int main(int argc, char** argv) {
     }
 
     Parser p(readFileContents(argv[1]));
-    TreeWalker treeWalker(p.parseProgram());
+    auto program = p.parseProgram();
+    TreeWalker treeWalker(program.get());
 
     // Initialize LLVM Targets
     InitializeNativeTarget();

@@ -125,7 +125,7 @@ std::unique_ptr<ProgramNode> Parser::parseProgram()
 
         if(statement != nullptr)
         {
-            programNode.get()->addStatement(std::move(statement));
+            programNode->Statements.push_back(std::move(statement));
         }
     }
     
